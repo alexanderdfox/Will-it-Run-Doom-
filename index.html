@@ -340,6 +340,7 @@
 				<button id="playBtn">Start System</button>
 				<button id="stopBtn" disabled>Reset</button>
 				<button id="randomizeBtn">Randomize Data</button>
+				<button id="randomColorsBtn">Randomize Colors</button>
 				<label class="color-picker-label">
 					Grid 1 Color <input type="color" id="grid1ColorPicker" value="#f83800">
 				</label>
@@ -376,6 +377,7 @@ const matrixGrid2 = document.getElementById('matrixGrid2');
 const playBtn = document.getElementById('playBtn');
 const stopBtn = document.getElementById('stopBtn');
 const randomizeBtn = document.getElementById('randomizeBtn');
+const randomColorsBtn = document.getElementById('randomColorsBtn');
 const exportWavBtn = document.getElementById('exportWavBtn');
 const exportGraphicsCsvBtn = document.getElementById('exportGraphicsCsvBtn');
 const importGraphicsCsvInput = document.getElementById('importGraphicsCsvInput');
@@ -443,6 +445,25 @@ function updateGridColors() {
 
 grid1ColorPicker.addEventListener('input', updateGridColors);
 grid2ColorPicker.addEventListener('input', updateGridColors);
+
+function getRandomHexColor() {
+	const letters = '0123456789ABCDEF';
+	let color = '#';
+	for (let i = 0; i < 6; i++) {
+		color += letters[Math.floor(Math.random() * 16)];
+	}
+	return color;
+}
+
+randomColorsBtn.addEventListener('click', () => {
+	for (let i = 0; i < TOTAL_NODES_1; i++) {
+		nodeColors1[i] = getRandomHexColor();
+	}
+	for (let i = 0; i < TOTAL_NODES_2; i++) {
+		nodeColors2[i] = getRandomHexColor();
+	}
+	statusDiv.textContent = "Status: Assigned distinct random colors to every block!";
+});
 
 function toggleMenu() {
 	menuVisible = !menuVisible;
