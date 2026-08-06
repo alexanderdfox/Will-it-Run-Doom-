@@ -20,6 +20,69 @@
 			justify-content: center;
 		}
 
+		/* Epilepsy Warning Overlay */
+		#epilepsyOverlay {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100vw;
+			height: 100vh;
+			background: rgba(8, 8, 16, 0.95);
+			z-index: 100;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			padding: 20px;
+			box-sizing: border-box;
+		}
+
+		.warning-box {
+			background: #181828;
+			border: 2px solid #f83800;
+			padding: 30px;
+			max-width: 500px;
+			text-align: center;
+			border-radius: 4px;
+			box-shadow: 0 0 25px rgba(248, 56, 0, 0.4);
+		}
+
+		.warning-box h2 {
+			color: #f83800;
+			margin-top: 0;
+			font-size: 1.2rem;
+			letter-spacing: 2px;
+		}
+
+		.warning-box p {
+			color: #acadc9;
+			font-size: 0.8rem;
+			line-height: 1.5;
+			margin-bottom: 20px;
+		}
+
+		.warning-box button {
+			background: #f83800;
+			color: #fff;
+			border: 2px solid #000;
+			padding: 10px 20px;
+			font-weight: bold;
+			font-family: inherit;
+			cursor: pointer;
+			text-transform: uppercase;
+			font-size: 0.75rem;
+			box-shadow: 2px 2px #000;
+			transition: 0.1s;
+		}
+
+		.warning-box button:hover {
+			background: #e86828;
+		}
+
+		.warning-box button:active {
+			transform: translate(2px, 2px);
+			box-shadow: none;
+		}
+
 		.screen-container {
 			position: relative;
 			width: 100vw;
@@ -145,9 +208,10 @@
 			gap: 6px;
 			flex-wrap: wrap;
 			justify-content: center;
+			align-items: center;
 		}
 
-		button, label.file-upload {
+		button, label.file-upload, .color-picker-label {
 			background: #f83800;
 			color: #fff;
 			border: 2px solid #000;
@@ -160,8 +224,30 @@
 			transition: 0.1s;
 			text-transform: uppercase;
 			font-size: 0.65rem;
-			display: inline-block;
+			display: inline-flex;
+			align-items: center;
+			gap: 4px;
 			text-align: center;
+		}
+
+		.color-picker-label {
+			background: #282848;
+		}
+
+		input[type="color"] {
+			appearance: none;
+			border: none;
+			width: 16px;
+			height: 16px;
+			cursor: pointer;
+			background: none;
+			padding: 0;
+		}
+		input[type="color"]::-webkit-color-swatch-wrapper {
+			padding: 0;
+		}
+		input[type="color"]::-webkit-color-swatch {
+			border: 1px solid #000;
 		}
 
 		button.flow-btn {
@@ -171,10 +257,10 @@
 			background: #00a8f8;
 			color: #000;
 		}
-		button:hover, label.file-upload:hover {
+		button:hover, label.file-upload:hover, .color-picker-label:hover {
 			background: #e86828;
 		}
-		button.flow-btn:hover {
+		button.flow-btn:hover, .color-picker-label:hover {
 			background: #484878;
 		}
 		button:active {
@@ -220,6 +306,15 @@
 </head>
 <body>
 
+<!-- Epilepsy Warning Overlay -->
+<div id="epilepsyOverlay">
+	<div class="warning-box">
+		<h2>EPILEPSY WARNING</h2>
+		<p>This application features flashing lights, rapid geometric motion, and complex visual patterns that may trigger seizures or discomfort for individuals with photosensitive epilepsy. Viewer discretion is advised.</p>
+		<button id="acceptWarningBtn">I Understand, Enter</button>
+	</div>
+</div>
+
 <div class="screen-container">
 	<div id="gridContainer">
 		<div id="matrixGrid1" class="matrixGrid"></div>
@@ -245,6 +340,12 @@
 				<button id="playBtn">Start System</button>
 				<button id="stopBtn" disabled>Reset</button>
 				<button id="randomizeBtn">Randomize Data</button>
+				<label class="color-picker-label">
+					Grid 1 Color <input type="color" id="grid1ColorPicker" value="#f83800">
+				</label>
+				<label class="color-picker-label">
+					Grid 2 Color <input type="color" id="grid2ColorPicker" value="#00e8d8">
+				</label>
 				<button id="exportWavBtn">Export 3D WAV</button>
 				<button id="exportGraphicsCsvBtn">Export Graphics CSV</button>
 				<label class="file-upload">
@@ -253,6 +354,10 @@
 				<button id="exportSoundCsvBtn">Export Sound CSV</button>
 				<label class="file-upload">
 					Load Sound CSV <input type="file" id="importSoundCsvInput" accept=".csv">
+				</label>
+				<button id="exportColorsCsvBtn">Export Colors CSV</button>
+				<label class="file-upload">
+					Load Colors CSV <input type="file" id="importColorsCsvInput" accept=".csv">
 				</label>
 			</div>
 		</div>
@@ -276,9 +381,20 @@ const exportGraphicsCsvBtn = document.getElementById('exportGraphicsCsvBtn');
 const importGraphicsCsvInput = document.getElementById('importGraphicsCsvInput');
 const exportSoundCsvBtn = document.getElementById('exportSoundCsvBtn');
 const importSoundCsvInput = document.getElementById('importSoundCsvInput');
+const exportColorsCsvBtn = document.getElementById('exportColorsCsvBtn');
+const importColorsCsvInput = document.getElementById('importColorsCsvInput');
 const statusDiv = document.getElementById('status');
 const hudOverlay = document.getElementById('hudOverlay');
 const toggleMenuBtn = document.getElementById('toggleMenuBtn');
+const epilepsyOverlay = document.getElementById('epilepsyOverlay');
+const acceptWarningBtn = document.getElementById('acceptWarningBtn');
+
+const grid1ColorPicker = document.getElementById('grid1ColorPicker');
+const grid2ColorPicker = document.getElementById('grid2ColorPicker');
+
+acceptWarningBtn.addEventListener('click', () => {
+	epilepsyOverlay.style.display = 'none';
+});
 
 let isRunning = false;
 let animationId = null;
@@ -289,16 +405,6 @@ let menuVisible = true;
 // Web Audio API context & nodes for live audio generation
 let audioCtx = null;
 let scriptNode = null;
-
-const colorPalette1 = [
-	"#f83800", "#e40058", "#b818f8", "#7028f8", "#0058f8", "#0088f8",
-	"#00a8f8", "#008888", "#004058", "#f878f8"
-];
-
-const colorPalette2 = [
-	"#00e8d8", "#58f898", "#00a800", "#58d858", "#f8f8f8", "#f8d878",
-	"#f8b8f8", "#f878f8", "#004058", "#008888"
-];
 
 // Grid 1 Data Arrays (10x10) - Graphics spatial layout & Sound frequencies separated
 const nodeX1 = new Float32Array(TOTAL_NODES_1);
@@ -323,6 +429,20 @@ const freqY2_2 = new Float32Array(TOTAL_NODES_2);
 const nodeColors2 = [];
 const canvases2 = [];
 const contexts2 = [];
+
+function updateGridColors() {
+	const color1 = grid1ColorPicker.value;
+	for (let i = 0; i < nodeColors1.length; i++) {
+		nodeColors1[i] = color1;
+	}
+	const color2 = grid2ColorPicker.value;
+	for (let i = 0; i < nodeColors2.length; i++) {
+		nodeColors2[i] = color2;
+	}
+}
+
+grid1ColorPicker.addEventListener('input', updateGridColors);
+grid2ColorPicker.addEventListener('input', updateGridColors);
 
 function toggleMenu() {
 	menuVisible = !menuVisible;
@@ -366,7 +486,7 @@ function initGrids() {
 			freqX2_1[idx1] = 220.0 + (c * 10.0);
 			freqY1_1[idx1] = 110.0 + (r * 15.0);
 			freqY2_1[idx1] = 220.0 + (r * 10.0);
-			nodeColors1.push(colorPalette1[(r + c) % colorPalette1.length]);
+			nodeColors1.push(grid1ColorPicker.value);
 
 			const canvas1 = document.createElement('canvas');
 			canvas1.className = 'mini-oscope';
@@ -389,7 +509,7 @@ function initGrids() {
 			freqX2_2[idx2] = 240.0 + (r * 8.0);
 			freqY1_2[idx2] = 130.0 + (c * 12.0);
 			freqY2_2[idx2] = 240.0 + (c * 8.0);
-			nodeColors2.push(colorPalette2[(r * c) % colorPalette2.length]);
+			nodeColors2.push(grid2ColorPicker.value);
 
 			const canvas2 = document.createElement('canvas');
 			canvas2.className = 'mini-oscope';
@@ -432,7 +552,6 @@ function applyFlowPhysics(i, t, xRef, yRef, zRef, fx1Ref, fx2Ref, fy1Ref, fy2Ref
 	let fy1 = fy1Ref, fy2 = fy2Ref;
 
 	if (currentFlowMode === 'laminar') {
-		// Pure steady-state laminar flow: smooth drift along the surface using global time t
 		z += 0.05 * Math.sin(t + i * 0.1);
 	} else if (currentFlowMode === 'oscillating') {
 		const surge = Math.sin(t * 2.0) * 0.15;
@@ -470,7 +589,6 @@ function startAudio() {
 		audioCtx.resume();
 	}
 
-	// Create a ScriptProcessor node to generate real-time audio streams (X to Left, Y to Right)
 	scriptNode = audioCtx.createScriptProcessor(4096, 2, 2);
 	const totalVoices = TOTAL_NODES_1 + TOTAL_NODES_2;
 	const gainScale = 1.0 / Math.sqrt(totalVoices);
@@ -719,11 +837,11 @@ importGraphicsCsvInput.addEventListener('change', (event) => {
 
 		let idx1 = 0, idx2 = 0;
 		for (let i = startIndex; i < lines.length; i++) {
-			const parts = lines[i].split(',').map(Number);
+			const parts = lines[i].split(',').map(item => item.trim());
 			if (parts.length >= 5) {
-				const gridId = parts[0];
-				const nIdx = parts[1];
-				const x = parts[2], y = parts[3], z = parts[4];
+				const gridId = Number(parts[0]);
+				const nIdx = Number(parts[1]);
+				const x = Number(parts[2]), y = Number(parts[3]), z = Number(parts[4]);
 				if (gridId === 1 && nIdx < TOTAL_NODES_1) {
 					nodeX1[nIdx] = x; nodeY1[nIdx] = y; nodeZ1[nIdx] = z;
 					idx1++;
@@ -769,22 +887,72 @@ importSoundCsvInput.addEventListener('change', (event) => {
 
 		let idx1 = 0, idx2 = 0;
 		for (let i = startIndex; i < lines.length; i++) {
-			const parts = lines[i].split(',').map(Number);
+			const parts = lines[i].split(',').map(item => item.trim());
 			if (parts.length >= 6) {
-				const gridId = parts[0];
-				const nIdx = parts[1];
+				const gridId = Number(parts[0]);
+				const nIdx = Number(parts[1]);
 				if (gridId === 1 && nIdx < TOTAL_NODES_1) {
-					freqX1_1[nIdx] = parts[2]; freqX2_1[nIdx] = parts[3];
-					freqY1_1[nIdx] = parts[4]; freqY2_1[nIdx] = parts[5];
+					freqX1_1[nIdx] = Number(parts[2]); freqX2_1[nIdx] = Number(parts[3]);
+					freqY1_1[nIdx] = Number(parts[4]); freqY2_1[nIdx] = Number(parts[5]);
 					idx1++;
 				} else if (gridId === 2 && nIdx < TOTAL_NODES_2) {
-					freqX1_2[nIdx] = parts[2]; freqX2_2[nIdx] = parts[3];
-					freqY1_2[nIdx] = parts[4]; freqY2_2[nIdx] = parts[5];
+					freqX1_2[nIdx] = Number(parts[2]); freqX2_2[nIdx] = Number(parts[3]);
+					freqY1_2[nIdx] = Number(parts[4]); freqY2_2[nIdx] = Number(parts[5]);
 					idx2++;
 				}
 			}
 		}
 		statusDiv.textContent = `Status: Loaded Sound Frequencies - Grid 1 (${Math.min(idx1, TOTAL_NODES_1)}) & Grid 2 (${Math.min(idx2, TOTAL_NODES_2)})!`;
+	};
+	reader.readAsText(file);
+});
+
+// --- Export & Import Colors CSV ---
+exportColorsCsvBtn.addEventListener('click', () => {
+	let csvContent = "data:text/csv;charset=utf-8,grid,nodeIndex,color\n";
+	for (let i = 0; i < TOTAL_NODES_1; i++) {
+		csvContent += `1,${i},${nodeColors1[i]}\n`;
+	}
+	for (let i = 0; i < TOTAL_NODES_2; i++) {
+		csvContent += `2,${i},${nodeColors2[i]}\n`;
+	}
+	const encodedUri = encodeURI(csvContent);
+	const link = document.createElement("a");
+	link.setAttribute("href", encodedUri);
+	link.setAttribute("download", "matrix_node_colors.csv");
+	document.body.appendChild(link);
+	link.click();
+	document.body.removeChild(link);
+	statusDiv.textContent = "Status: Node Colors CSV Exported!";
+});
+
+importColorsCsvInput.addEventListener('change', (event) => {
+	const file = event.target.files[0];
+	if (!file) return;
+
+	const reader = new FileReader();
+	reader.onload = function(e) {
+		const text = e.target.result;
+		const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+		let startIndex = lines[0].toLowerCase().includes('grid') || lines[0].toLowerCase().includes('color') ? 1 : 0;
+
+		let idx1 = 0, idx2 = 0;
+		for (let i = startIndex; i < lines.length; i++) {
+			const parts = lines[i].split(',').map(item => item.trim());
+			if (parts.length >= 3) {
+				const gridId = Number(parts[0]);
+				const nIdx = Number(parts[1]);
+				const colorVal = parts[2];
+				if (gridId === 1 && nIdx < TOTAL_NODES_1) {
+					nodeColors1[nIdx] = colorVal;
+					idx1++;
+				} else if (gridId === 2 && nIdx < TOTAL_NODES_2) {
+					nodeColors2[nIdx] = colorVal;
+					idx2++;
+				}
+			}
+		}
+		statusDiv.textContent = `Status: Loaded Node Colors - Grid 1 (${Math.min(idx1, TOTAL_NODES_1)}) & Grid 2 (${Math.min(idx2, TOTAL_NODES_2)})!`;
 	};
 	reader.readAsText(file);
 });
